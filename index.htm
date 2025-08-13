@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yegane alim olacaq</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .view-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .view-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .content {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .university-grid {
+            display: grid;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .university-card {
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        
+        .university-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .university-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .specializations {
+            display: grid;
+            gap: 10px;
+        }
+        
+        .specialization {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .spec-name {
+            font-weight: 500;
+            flex: 1;
+        }
+        
+        .spec-scores {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .score {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .paid-score {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .free-score {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+        
+        .paid-legend {
+            background: #ff5252;
+        }
+        
+        .free-legend {
+            background: #4caf50;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .comparison-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.3s;
+        }
+        
+        .comparison-table th.sortable:hover {
+            background: #5a67d8;
+        }
+        
+        .comparison-table th.sortable::after {
+            content: ' ↕️';
+            opacity: 0.5;
+        }
+        
+        .comparison-table th.sortable.sorted-asc::after {
+            content: ' 🔼';
+            opacity: 1;
+        }
+        
+        .comparison-table th.sortable.sorted-desc::after {
+            content: ' 🔽';
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Yeganə İxtisas Seç</h1>
+        </div>
+        
+        <div class="controls">
+            <div class="view-toggle">
+                <button class="view-btn active" data-view="cards">📋 Ümumi</button>
+                <button class="view-btn" data-view="table">📊 Cədvəl</button>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Ümumi universitet sayı</h3>
+                <div class="stat-value" id="totalUniversities">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>İxtisas sayı</h3>
+                <div class="stat-value" id="totalSpecializations">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Orta keçid balı</h3>
+                <div class="stat-value" id="avgScore">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Ən aşağı bal</h3>
+                <div class="stat-value" id="minScoreValue">-</div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color paid-legend"></div>
+                    <span>Pullu təhsil</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color free-legend"></div>
+                    <span>Pulsuz təhsil</span>
+                </div>
+            </div>
+            
+            <div id="cardsView" class="university-grid"></div>
+            <div id="tableView" style="display: none; padding: 20px; overflow-x: auto;">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-column="university">Universitet</th>
+                            <th class="sortable" data-column="specialization">İxtisas</th>
+                            <th class="sortable" data-column="paid">Pullu bal</th>
+                            <th class="sortable" data-column="free">Pulsuz bal</th>
+                            <th class="sortable" data-column="difference">Fərq</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const universityData = [
+            {
+                name: "Xəzər Universiteti",
+                specializations: [
+                    { name: "Kimya müəllimliyi", paidScore: 200.0, freeScore: 381.2 },
+                    { name: "Biologiya müəllimliyi", paidScore: 200.0, freeScore: 346.8 },
+                    { name: "Kimya və biologiya müəllimliyi", paidScore: 355.2, freeScore: 355.2 },
+                    { name: "Biologiya (tədris ingilis dilində)", paidScore: 200.0, freeScore: 330.7 }
+                ]
+            },
+            {
+                name: "Qərbi Kaspi Universiteti",
+                specializations: [
+                    { name: "Psixologiya (tədris ingilis dilində)", paidScore: 292.4, freeScore: 456.6 },
+                    { name: "Psixologiya", paidScore: 200.0, freeScore: 462.3 }
+                ]
+            },
+            {
+                name: "Qarabağ Universiteti",
+                specializations: [
+                    { name: "Psixologiya", paidScore: 425.3, freeScore: 425.3 }
+                ]
+            },
+            {
+                name: "Bakı Mühəndislik Universiteti",
+                specializations: [
+                    { name: "Biotexnologiya", paidScore: 369.5, freeScore: 504.8 },
+                    { name: "Kimya (tədris ingilis dilində)", paidScore: 442.8, freeScore: 442.8 }
+                ]
+            },
+            {
+                name: "Bakı Slavyan Universiteti",
+                specializations: [
+                    { name: "Psixologiya", paidScore: 440.1, freeScore: 453.2 },
+                    { name: "Kimya və biologiya müəllimliyi", paidScore: 370.5, freeScore: 370.5 }
+                ]
+            },
+            {
+                name: "Azərbaycan Dövlət Pedaqoji Universiteti",
+                specializations: [
+                    { name: "Biologiya müəllimliyi", paidScore: 200.0, freeScore: 345.3 },
+                    { name: "Kimya müəllimliyi", paidScore: 200.0, freeScore: 362.1 }
+                ]
+            },
+            {
+                name: "Bakı Dövlət Universiteti",
+                specializations: [
+                    { name: "Biologiya müəllimliyi", paidScore: 389.3, freeScore: 389.3 },
+                    { name: "Kimya müəllimliyi", paidScore: 415.8, freeScore: 416.3 },
+                    { name: "Biologiya", paidScore: 468.1, freeScore: 468.1 },
+                    { name: "Biotexnologiya", paidScore: 472.1, freeScore: 504.9 },
+                    { name: "Ekologiya (tədris ingilis dilində)", paidScore: 351.9, freeScore: 351.9 },
+                    { name: "Kimya", paidScore: 452.7, freeScore: 452.7 }
+                ]
+            },
+            {
+                name: "Azərbaycan Dövlət Bədən Tərbiyəsi və İdman Akademiyası",
+                specializations: [
+                    { name: "Bədən tərbiyəsi və idmanda reabilitasiya", paidScore: 364.2, freeScore: 398.0 }
+                ]
+            }
+        ];
+
+        let currentView = 'cards';
+        let sortColumn = '';
+        let sortDirection = 'asc';
+
+        function updateStats() {
+            const allSpecs = universityData.flatMap(u => u.specializations);
+            const totalUniversities = new Set(universityData.map(u => u.name)).size;
+            const totalSpecs = allSpecs.length;
+            const avgScore = totalSpecs > 0 ? Math.round(allSpecs.reduce((sum, s) => sum + s.paidScore, 0) / totalSpecs) : 0;
+            const minScore = totalSpecs > 0 ? Math.min(...allSpecs.map(s => Math.min(s.paidScore, s.freeScore))) : 0;
+
+            document.getElementById('totalUniversities').textContent = totalUniversities;
+            document.getElementById('totalSpecializations').textContent = totalSpecs;
+            document.getElementById('avgScore').textContent = avgScore;
+            document.getElementById('minScoreValue').textContent = minScore;
+        }
+
+        function renderCards() {
+            const container = document.getElementById('cardsView');
+            container.innerHTML = '';
+
+            universityData.forEach(university => {
+                const universityCard = document.createElement('div');
+                universityCard.className = 'university-card';
+
+                const universityName = document.createElement('div');
+                universityName.className = 'university-name';
+                universityName.textContent = university.name;
+
+                const specializations = document.createElement('div');
+                specializations.className = 'specializations';
+
+                university.specializations.forEach(spec => {
+                    const specDiv = document.createElement('div');
+                    specDiv.className = 'specialization';
+
+                    const specName = document.createElement('div');
+                    specName.className = 'spec-name';
+                    specName.textContent = spec.name;
+
+                    const specScores = document.createElement('div');
+                    specScores.className = 'spec-scores';
+
+                    const paidScore = document.createElement('span');
+                    paidScore.className = 'score paid-score';
+                    paidScore.textContent = `Pullu: ${spec.paidScore}`;
+
+                    const freeScore = document.createElement('span');
+                    freeScore.className = 'score free-score';
+                    freeScore.textContent = `Pulsuz: ${spec.freeScore}`;
+
+                    specScores.appendChild(paidScore);
+                    specScores.appendChild(freeScore);
+
+                    specDiv.appendChild(specName);
+                    specDiv.appendChild(specScores);
+                    specializations.appendChild(specDiv);
+                });
+
+                universityCard.appendChild(universityName);
+                universityCard.appendChild(specializations);
+                container.appendChild(universityCard);
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            let tableData = [];
+            universityData.forEach(university => {
+                university.specializations.forEach(spec => {
+                    const difference = Math.abs(spec.freeScore - spec.paidScore);
+                    tableData.push({
+                        university: university.name,
+                        specialization: spec.name,
+                        paid: spec.paidScore,
+                        free: spec.freeScore,
+                        difference: difference
+                    });
+                });
+            });
+
+            if (sortColumn) {
+                tableData.sort((a, b) => {
+                    let aVal = a[sortColumn];
+                    let bVal = b[sortColumn];
+                    
+                    if (typeof aVal === 'string') {
+                        return sortDirection === 'asc' 
+                            ? aVal.localeCompare(bVal)
+                            : bVal.localeCompare(aVal);
+                    } else {
+                        return sortDirection === 'asc' 
+                            ? aVal - bVal
+                            : bVal - aVal;
+                    }
+                });
+            }
+
+            tableData.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.university}</td>
+                    <td>${item.specialization}</td>
+                    <td style="color: #c62828; font-weight: bold;">${item.paid.toFixed(1)}</td>
+                    <td style="color: #2e7d32; font-weight: bold;">${item.free.toFixed(1)}</td>
+                    <td>${item.difference.toFixed(1)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.querySelectorAll('.sortable').forEach(header => {
+                header.classList.remove('sorted-asc', 'sorted-desc');
+                if (header.dataset.column === sortColumn) {
+                    header.classList.add(sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+                }
+            });
+        }
+
+        function updateView() {
+            document.querySelectorAll('#cardsView, #tableView').forEach(view => {
+                view.style.display = 'none';
+            });
+
+            if (currentView === 'cards') {
+                document.getElementById('cardsView').style.display = 'grid';
+                renderCards();
+            } else if (currentView === 'table') {
+                document.getElementById('tableView').style.display = 'block';
+                renderTable();
+            }
+        }
+
+        // Event listeners
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentView = btn.dataset.view;
+                updateView();
+            });
+        });
+
+        document.querySelector('.comparison-table thead').addEventListener('click', (e) => {
+            const header = e.target.closest('th.sortable');
+            if (!header) return;
+
+            const column = header.dataset.column;
+
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            
+            renderTable();
+        });
+
+        // Initialize
+        updateStats();
+        updateView();
+    </script>
+</body>
+</html>
